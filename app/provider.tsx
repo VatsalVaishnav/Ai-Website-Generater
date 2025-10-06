@@ -1,5 +1,8 @@
 "use client"
-import React from 'react'
+import React, { use, useEffect, useState } from 'react'
+import axios from 'axios';
+import { useUser } from '@clerk/nextjs';
+import { UserDetailContext } from '@/context/UserDetailContext';
 
 const provider = ({
   children,
@@ -7,11 +10,30 @@ const provider = ({
   children: React.ReactNode;
 }>) => {
 
-    const CreateNewUser=()=>{
+  const {user}= useUser();
+  const [userDetail,setUserDetail]=useState<any>(null);
+  console.log(user);
+  
+  useEffect(()=>{
+    console.log("sdfweferweefrfreferewrrfrer");
+    
+    CreateNewUser()
+  },[])
+
+    const CreateNewUser=async()=>{
+      const result =await axios.post('/api/users',{
+      })
+      console.log(result.data)
+      setUserDetail(result.data?.user)
         
     }
   return (
-    <div>{children}</div>
+
+    <div>
+      <UserDetailContext.Provider value={{userDetail,setUserDetail}}>
+      {children}
+      </UserDetailContext.Provider>
+      </div>
   )
 }
 

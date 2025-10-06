@@ -1,9 +1,12 @@
+"use client"
 import { Button } from '@/components/ui/button'
+import { UserDetailContext } from '@/context/UserDetailContext'
 import { SignInButton } from '@clerk/nextjs'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight} from 'lucide-react'
+import Link from 'next/link'
 import Image from 'next/image'
 import path from 'path'
-import React from 'react'
+import React, { useContext } from 'react'
 
 
 const MenuOption=[
@@ -19,6 +22,8 @@ const MenuOption=[
 ]
 
 const Header = () => {
+    const {userDetail} =useContext(UserDetailContext)
+
   return (
     <div className='flex items-center justify-between p-4 shadow'>
         <div className='flex items-center gap-2 '>
@@ -35,9 +40,17 @@ const Header = () => {
         </div>
 
         <div>
+            {!userDetail ?  
             <SignInButton mode='modal' forceRedirectUrl={'/workspace'}>
             <Button className='bg-blue-600 text-white hover:bg-blue-700'>Get Started <ArrowRight/> </Button>
             </SignInButton>
+            :
+            <>
+            <Link href={'/workspace'}>
+            <Button className='bg-blue-600 text-white hover:bg-blue-700'>Get Started <ArrowRight/> </Button>
+            </Link>
+            </>
+            }
         </div>
     </div>
 

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Outfit} from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Provider } from "@radix-ui/react-tooltip";
-
+import { Provider as TooltipProvider } from "@radix-ui/react-tooltip";
+import Provider from "./provider"; // <-- Import your provider
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,14 +20,16 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-    <html lang="en">
-      <body className={outfit.className}>
-      <Provider>
-
-        {children}
-      </Provider>
-      </body>
-    </html>
+      <html lang="en">
+        <body className={outfit.className}>
+          <TooltipProvider>
+            <Provider>  
+              {children}
+              <Toaster/>
+              </Provider>
+          </TooltipProvider>
+        </body>
+      </html>
     </ClerkProvider>
   );
 }
