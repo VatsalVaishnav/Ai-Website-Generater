@@ -6,11 +6,13 @@ import { ArrowUp, ArrowUpRight } from "lucide-react";
 type Props = {
   messages: Messages[];
   onSend: any;
+  loading: boolean;
 };
 
-const ChatSection = ({ messages, onSend }: Props) => {
+const ChatSection = ({ messages, onSend ,loading }: Props) => {
   console.log("messsadwd", messages);
   const [input, setInput] = useState<string>();
+  
   const handleSend = () => {
     if (!input?.trim()) return;
     onSend(input);
@@ -19,7 +21,7 @@ const ChatSection = ({ messages, onSend }: Props) => {
   return (
     <div className="w-96 shadow h-[91vh] p-4 flex flex-col">
       <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col">
-        {messages?.length === 0 ? (
+        {messages.length === 0 ? (
           <p className="text-gray-400 text-center">no Message Found</p>
         ) : (
           messages?.map((message, index) => (
@@ -43,6 +45,12 @@ const ChatSection = ({ messages, onSend }: Props) => {
             </div>
           ))
         )}
+
+       {loading && <div className="flex justify-center items-center p-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-zinc-800"></div>
+          <span className="mt-2 text-zinc-800">Generating Code ...</span>
+        </div>
+       }
       </div>
 
       <div className="p-3 border-t flex items-center gap-2">

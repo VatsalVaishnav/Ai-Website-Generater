@@ -1,26 +1,24 @@
-"use client"
-import React, { use, useEffect, useState } from 'react'
-import PlayGroundHeader from '../_component/PlayGroundHeader'
-import ChatSection from '../_component/ChatSection'
-import WebsiteDesine from '../_component/WebsiteDesine'
-import ElementSettingSection from '../_component/ElementSettingSection'
-import { useParams, useSearchParams } from 'next/navigation'
-import axios from 'axios'
-import { set } from 'date-fns'
+"use client";
+import React, { use, useEffect, useState } from "react";
+import PlaygroundHeader from "../_component/PlayGroundHeader";
+import ChatSection from "../_component/ChatSection";
+import WebsiteDesine from "../_component/WebsiteDesine";
+import ElementSettingSection from "../_component/ElementSettingSection";
+import { useParams, useSearchParams } from "next/navigation";
+import axios from "axios";
+import { set } from "date-fns";
 // import { log } from 'console'
 
-export type Frame={
-  projectId:string,
-  frameId:string,
-  designData:string,
-  chartMessages:Messages[],
-}
-export type Messages={
-  role:string,
-  content:string
-
-}
-
+export type Frame = {
+  projectId: string;
+  frameId: string;
+  designData: string;
+  chartMessages: Messages[];
+};
+export type Messages = {
+  role: string;
+  content: string;
+};
 
 const Promt = `userInput: {userInput}
 
@@ -60,103 +58,115 @@ Example:
 
 - User: "Hi" → Response: "Hello! How can I help you today?"  
 - User: "Build a responsive landing page with Tailwind CSS" → Response: [Generate full HTML code as per instructions above]
-`
+`;
 
-const PlayGround = () => {
-    const {projectId}=useParams();
-    const params=useSearchParams();
-    const frameId=params.get('frameId');
-    const [frameDetails,setFrameDetails]=useState<Frame>();
-    const [loading,setLoading]=useState(false);
-    const [messages,setMessages]=useState<Messages[]>([]);
-    const [generatedCode,setGeneratedCode]=useState<any>("");
-    console.log("frameDetails",frameDetails);
-    
-    const GetFrameDetails=async()=>{
-        const result =await axios.get('/api/frames?frameId='+frameId+"&projectId="+projectId);
-        // console.log("frame details",result.data);
-        setFrameDetails(result.data);
-        
+const Playground = () => {
+  const { projectId } = useParams();
+  const params = useSearchParams();
+  const frameId = params.get("frameId");
+  const [frameDetails, setFrameDetails] = useState<Frame>();
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<Messages[]>([]);
+  const [generatedCode, setGeneratedCode] = useState<any>("");
+  console.log("frameDetails", frameDetails);
+
+  const GetFrameDetails = async () => {
+    const result = await axios.get(
+      "/api/frames?frameId=" + frameId + "&projectId=" + projectId
+    );
+    // console.log("frame details",result.data);
+    setFrameDetails(result.data);
+    if (result.data?.chartMessages.length == 1) {
+      const userMsq = result.data?.chartMessages[0].content;
+      setMessages([{ role: "user", content: userMsq }]);
     }
+  };
 
-    useEffect(()=>{
-     frameId&& GetFrameDetails();
-    },[frameId])
+  useEffect(() => {
+    frameId && GetFrameDetails();
+  }, [frameId]);
 
+  const SendMessages = async (userInput: string) => {
+    setLoading(true);
+    setMessages((prev: any) => [...prev, { role: "user", content: userInput }]);
+    const result = await fetch("/api/ai-model", {
+      method: "POST",
+      body: JSON.stringify({
+        messages: [
+          { role: "user", content: Promt.replace("{userInput}", userInput) },
+        ],
+      }),
+    });
+    console.log("result result", result);
+    const reader = result.body?.getReader();
+    const decoder = new TextDecoder();
+    console.log("result decoder", decoder);
 
-    const SendMessages=async(userInput:string)=>{
-      setLoading(true);
-      setMessages((prev:any)=>[
-        ...prev,
-        {role:"user",content:userInput}
-      ])
-      const result=await fetch('/api/ai-model',{
-        method:'POST',
-        body:JSON.stringify({
-          messages:[{role:"user",content: Promt.replace("{userInput}",userInput)}]
-        })
-      });
-      console.log("result result",result);
-      const reader=result.body?.getReader();
-      const decoder=new TextDecoder();
-      console.log("result decoder",decoder);
-      
-      let aiResponse="";
-      console.log("result aiResponse",aiResponse);
-      let isCode=false;
-      
-      while(true && reader){
-        const{done,value}=await reader.read();
-        console.log("result done",done);
-        console.log("result value",value);
-        if(done)break;
+    let aiResponse = "";
+    console.log("result aiResponse", aiResponse);
+    let isCode = false;
 
-        const chunk=decoder.decode(value,{stream:true});
-        aiResponse+=chunk;
+    while (true && reader) {
+      const { done, value } = await reader.read();
+      console.log("result done", done);
+      console.log("result value", value);
+      if (done) break;
 
-        if(!isCode && aiResponse.includes("```html")){
-          isCode=true;
-          const index=aiResponse.indexOf("```html")+7;
-          const initialCodeChunk=aiResponse.slice(index);
-          setGeneratedCode((prev:any)=>prev+initialCodeChunk);
-      }else{
-        setGeneratedCode((prev:any)=>prev+chunk);
+      const chunk = decoder.decode(value, { stream: true });
+      aiResponse += chunk;
+
+      if (!isCode && aiResponse.includes("```html")) {
+        isCode = true;
+        const index = aiResponse.indexOf("```html") + 7;
+        const initialCodeChunk = aiResponse.slice(index);
+        setGeneratedCode((prev: any) => prev + initialCodeChunk);
+      } else {
+        setGeneratedCode((prev: any) => prev + chunk);
       }
-
-      
-      
     }
-    if(!isCode){
-      setMessages((prev:any)=>[
+    if (!isCode) {
+      setMessages((prev: any) => [
         ...prev,
-        {role:"assistant",content:aiResponse}
-      ])
-    }else{
-      setMessages((prev:any)=>[
+        { role: "assistant", content: aiResponse },
+      ]);
+    } else {
+      setMessages((prev: any) => [
         ...prev!,
-        {role:"assistant",content:"Your code is ready!"}
-      ])
+        { role: "assistant", content: "Your code is ready!" },
+      ]);
     }
     setLoading(false);
-  }
+  };
 
+  useEffect(() => {
+    if (messages.length>0 ) {
+      SaveMessages();
+    }
+  },[messages])
 
+  const SaveMessages=async()=>{
+    const result=await axios.put('/api/chats',{
+      messages:messages,
+      frameId:frameId,})
+    }
 
   return (
     <div>
-        <PlayGroundHeader/>
-        <div className='flex'>
-
-
+      <PlaygroundHeader />
+      <div className="flex">
         {/* chat section */}
-        <ChatSection messages={messages||[]} onSend={(input:string)=>SendMessages(input)}/>
+        <ChatSection
+          messages={messages || []}
+          onSend={(input: string) => SendMessages(input)}
+          loading={loading}
+        />
         {/* desine section */}
-        <WebsiteDesine/>
+        <WebsiteDesine />
         {/* setting section */}
         {/* <ElementSettingSection/> */}
-        </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default PlayGround
+export default Playground;
