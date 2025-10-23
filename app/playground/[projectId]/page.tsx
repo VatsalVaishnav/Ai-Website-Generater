@@ -7,6 +7,8 @@ import ElementSettingSection from "../_component/ElementSettingSection";
 import { useParams, useSearchParams } from "next/navigation";
 import axios from "axios";
 import { set } from "date-fns";
+import { send } from "process";
+import { toast } from "sonner";
 // import { log } from 'console'
 
 export type Frame = {
@@ -76,9 +78,16 @@ const Playground = () => {
     );
     // console.log("frame details",result.data);
     setFrameDetails(result.data);
+    const designCode = result.data?.desineCode || ""; 
+      const index = designCode.indexOf("```html") + 7;
+        const initialCodeChunk = designCode.slice(index);
+        setGeneratedCode(initialCodeChunk);
+
     if (result.data?.chartMessages.length == 1) {
       const userMsq = result.data?.chartMessages[0].content;
-      setMessages([{ role: "user", content: userMsq }]);
+      SendMessages(userMsq);
+    }else{
+      setMessages(result?.data?.chartMessages || []);
     }
   };
 
@@ -120,10 +129,11 @@ const Playground = () => {
         const index = aiResponse.indexOf("```html") + 7;
         const initialCodeChunk = aiResponse.slice(index);
         setGeneratedCode((prev: any) => prev + initialCodeChunk);
-      } else {
+      } else if (isCode) {
         setGeneratedCode((prev: any) => prev + chunk);
       }
     }
+    await saveGeneratedCode(aiResponse);
     if (!isCode) {
       setMessages((prev: any) => [
         ...prev,
@@ -139,16 +149,36 @@ const Playground = () => {
   };
 
   useEffect(() => {
-    if (messages.length>0 ) {
+    if (messages.length > 0) {
       SaveMessages();
     }
-  },[messages])
+  }, [messages]);
 
-  const SaveMessages=async()=>{
-    const result=await axios.put('/api/chats',{
-      messages:messages,
-      frameId:frameId,})
+  const SaveMessages = async () => {
+    try {
+      const result = await axios.put("/api/chats", {
+        messages: messages,
+        frameId: frameId,
+      });
+      // Optionally handle success
+    } catch (error: any) {
+      console.error(
+        "SaveMessages error:",
+        error?.response?.data || error.message
+      );
     }
+  };
+
+
+  const saveGeneratedCode = async (code:string) => {
+    const result = await axios.put("/api/frames", {
+      designCode: code,
+      frameId: frameId,
+      projectId: projectId,
+    });
+    console.log("saveGeneratedCode result", result);
+    toast.success("Design code saved successfully!");
+  }
 
   return (
     <div>
@@ -161,7 +191,7 @@ const Playground = () => {
           loading={loading}
         />
         {/* desine section */}
-        <WebsiteDesine />
+        <WebsiteDesine generatedCode={generatedCode?.replace('```','')} />
         {/* setting section */}
         {/* <ElementSettingSection/> */}
       </div>

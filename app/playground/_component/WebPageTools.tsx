@@ -1,22 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import WebPageTools from "./WebPageTools";
-type Props = {
-  generatedCode: string;
-};
-const WebsiteDesine = ({ generatedCode }: Props) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+import { Button } from '@/components/ui/button'
+import { Monitor, ReplaceAll, SquareArrowOutDownLeft, TabletSmartphone } from 'lucide-react'
+import React from 'react'
 
-  const [selectedScreenSize, setSelectedScreenSize] = useState("web");
-  console.log("generatedCode in WebsiteDesine", selectedScreenSize);
-  // Initialize iframe shell once
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
-
-    doc.open();
-    doc.write(`
-        <!DOCTYPE html>
+const HTML_CODE=`  <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8" />
@@ -56,42 +42,32 @@ const WebsiteDesine = ({ generatedCode }: Props) => {
             <script src="https://unpkg.com/@popperjs/core@2"></script>
             <script src="https://unpkg.com/tippy.js@6"></script>
         </head>
-        <body id="root"></body>
-        </html>
-      `);
-    doc.close();
-  }, []);
+        <body id="root">
+        {code}
+        </body>
+        </html>`
 
-  // Update body only when code changes
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
+const WebPageTools = ({selectedScreenSize,setSelectedScreenSize,generatedCode}:any) => {
+    const ViewInNewTab=()=>{
+        if(!generatedCode) return;
+        const cleanCode =(HTML_CODE.replace('{code}',generatedCode) ||'').
+        ReplaceAll('```html','').Replace('```','').replace('html','');
 
-    const root = doc.getElementById("root");
-    if (root) {
-      root.innerHTML =
-        generatedCode
-          ?.replaceAll("```html", "")
-          .replaceAll("```", "")
-          .replace("html", "") ?? "";
+        const blob = new Blob([cleanCode], { type: 'text/html' });
+        const url= URL.createObjectURL(blob);
+        window.open(url, '_blank');
     }
-  }, [generatedCode]);
-
   return (
-    <div className="p-5 w-full flex items-center flex-col  ">
-      <iframe
-        ref={iframeRef}
-        className={`${selectedScreenSize==='web'?'w-full':'w-[400px]'} h-[600px]  rounded-xl border-2`}
-        sandbox="allow-scripts allow-same-origin"
-      />
-      <WebPageTools
-        selectedScreenSize={selectedScreenSize}
-        setSelectedScreenSize={setSelectedScreenSize}
-        code={generatedCode}
-      />
+    <div className='p-2 shadow rounded-xl w-full flex items-center justify-between '>
+        <div className='flex gap-2 '>
+            <Button className={`${selectedScreenSize ==='web' ?'border border-primary':null}`} variant={`ghost`} onClick={()=>setSelectedScreenSize('web')} ><Monitor/></Button>
+            <Button className={`${selectedScreenSize ==='mobile' ?'border border-primary':null}`} variant={`ghost`} onClick={()=>setSelectedScreenSize('mobile')}><TabletSmartphone/></Button>
+        </div>
+        <div>
+            <Button variant={`outline`} onClick={()=>ViewInNewTab()}>View <SquareArrowOutDownLeft/></Button>
+        </div>
     </div>
-  );
-};
+  )
+}
 
-export default WebsiteDesine;
+export default WebPageTools
