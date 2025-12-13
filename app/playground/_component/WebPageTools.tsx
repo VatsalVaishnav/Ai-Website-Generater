@@ -50,12 +50,12 @@ const HTML_CODE=`  <!DOCTYPE html>
 const WebPageTools = ({selectedScreenSize,setSelectedScreenSize,generatedCode}:any) => {
     const ViewInNewTab=()=>{
         if(!generatedCode) return;
-        const cleanCode =(HTML_CODE.replace('{code}',generatedCode) ||'').
-        ReplaceAll('```html','').Replace('```','').replace('html','');
+        // const cleanCode =(HTML_CODE.replace('{code}',generatedCode) ||'').
+        // ReplaceAll('```html','').Replace('```','').replace('html','');
 
-        const blob = new Blob([cleanCode], { type: 'text/html' });
-        const url= URL.createObjectURL(blob);
-        window.open(url, '_blank');
+        // const blob = new Blob([cleanCode], { type: 'text/html' });
+        // const url= URL.createObjectURL(blob);
+        // window.open(url, '_blank');
     }
   return (
     <div className='p-2 shadow rounded-xl w-full flex items-center justify-between '>
